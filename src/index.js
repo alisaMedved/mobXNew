@@ -2,48 +2,50 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
-import { observable } from 'mobx';
+import { observable, configure, action } from 'mobx';
 import { observer } from 'mobx-react';
 
-// вычисляемое значение всегда предоставляется в виде геттера
+// один из принципов mobX - изменения в сторе должны осущесвлять только actions
 
-// наблюдаемая переменная - @observable
-// вычисляемая переменная - @computed - если оно нигде не используется то оно собирается gorbage collection
+configure({enforceActions: 'observed'});
 
-// если action попытается изменить значение наблюдаемой переменной на точно такое же - то этого не случится
-// - магия mobX под капотом
+const nickName = observable({
+    firstName: 'Yauhen',
+    age: 30,
 
-// mobX не пытается привести вычисляемое значение к актуальному значению если оно нигде не нужно
-// то есть нигде не выводится и не учавствует ни вкакой реакции
-// реакция -  @observer
+    get nickName() {
+        console.log('Generate nickName!');
+        return `${this.firstName}${this.age}`;
+    },
 
-//весь стор приложения c его методами можно запихнуть в один объект - observable object - наблюдаемый объект
+    increment() { this.age++ },
 
-// бывает и observable array
-
-const todos = observable([
-    {text: 'react'},
-    {text: 'mobX'},
-]);
-
+    decrement() { this.age-- },
+},
+    {
+        increment: action('Plus one'),
+        decrement: action('Minus one')
+    }, {
+    name: 'nickNameObservableObject'
+    }  );
 
 @observer class Counter extends Component {
 
+    handleIncrement = () => { this.props.store.increment() };
+    handleDecrement = () => { this.props.store.decrement() };
+
     render() {
-        console.log('рендер идет');
         return (
             <div className="App">
-                    <ul>
-                        {todos.map(({text}) => <li key={text}>{text}</li>)}
-                    </ul>
+                <h1>{this.props.store.nickName}</h1>
+                <h1>{this.props.store.age}</h1>
+                <button onClick={this.handleDecrement}>-1</button>
+                <button onClick={this.handleIncrement}>+1</button>
             </div>
         );
     }
 }
 
-ReactDOM.render(<Counter store={todos} />, document.getElementById('root'));
+ReactDOM.render(<Counter store={nickName} />, document.getElementById('root'));
 
-// пуш после рендера сработает потому что массив является наблюдаемым
-// притом пуш вызовет перерендер
-todos.push({text: 'redux'});
 serviceWorker.unregister();
