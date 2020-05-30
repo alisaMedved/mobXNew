@@ -2,20 +2,37 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
-import { observable } from 'mobx';
+import { observable, computed } from 'mobx';
 import { observer } from 'mobx-react';
 
-const counterState = observable({
-    count: 0,
-});
+// вычисляемое значение всегда предоставляется в виде геттера
 
-counterState.increment = function() {
-    this.count++
+// наблюдаемая переменная - @observable
+// вычисляемая переменная - @computed - если оно нигде не используется то оно собирается gorbage collection
+// если action попытается изменить значение наблюдаемой переменной на точно такое же - то этого не случится
+// - магия mobX под капотом
+// mobX не пытается привести вычисляемое значение к актуальному значению если оно нигде не нужно
+// то есть нигде не выводится и не учавствует ни вкакой реакции
+// реакция -  @observer
+
+const nickName = new class UserNickName {
+    @observable firstName = 'Yahen';
+    @observable age = 30;
+
+    @computed get nickName() {
+        console.log('Generate nickName!');
+        return `${this.firstName}${this.age}`;
+    }
 };
 
-counterState.decrement = function() {
-    this.count--
+nickName.increment = function() {
+    this.age++
 };
+
+nickName.decrement = function() {
+    this.age--
+};
+
 
 @observer class Counter extends Component {
 
@@ -25,7 +42,8 @@ counterState.decrement = function() {
     render() {
         return (
             <div className="App">
-                <h1>{this.props.store.count}</h1>
+                <h1>{this.props.store.nickName}</h1>
+                <h1>{this.props.store.age}</h1>
                 <button onClick={this.handleDecrement}>-1</button>
                 <button onClick={this.handleIncrement}>+1</button>
             </div>
@@ -33,6 +51,6 @@ counterState.decrement = function() {
     }
 }
 
-ReactDOM.render(<Counter store={counterState} />, document.getElementById('root'));
+ReactDOM.render(<Counter store={nickName} />, document.getElementById('root'));
 
 serviceWorker.unregister();
