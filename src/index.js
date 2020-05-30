@@ -2,22 +2,31 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
-import { observable, computed } from 'mobx';
+import { computed, extendObservable } from 'mobx';
 import { observer } from 'mobx-react';
 
 // вычисляемое значение всегда предоставляется в виде геттера
 
 // наблюдаемая переменная - @observable
 // вычисляемая переменная - @computed - если оно нигде не используется то оно собирается gorbage collection
+
 // если action попытается изменить значение наблюдаемой переменной на точно такое же - то этого не случится
 // - магия mobX под капотом
+
 // mobX не пытается привести вычисляемое значение к актуальному значению если оно нигде не нужно
 // то есть нигде не выводится и не учавствует ни вкакой реакции
 // реакция -  @observer
 
+//весь стор приложения можно запихнуть в один класс
+
 const nickName = new class UserNickName {
-    @observable firstName = 'Yahen';
-    @observable age = 30;
+
+    constructor() {
+        extendObservable(this, {
+            firstName: 'Yahen',
+            age: 30,
+        })
+    }
 
     @computed get nickName() {
         console.log('Generate nickName!');
