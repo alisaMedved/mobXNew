@@ -11,6 +11,7 @@ class Store {
         { name: "Max", sp: 10 },
         { name: "Leo", sp: 8 },
     ];
+    filter: '';
 
    get totalSum() {
         return this.devsList.reduce((sum, {sp}) => sum += sp, 0)
@@ -24,6 +25,10 @@ class Store {
             }
         });
     };
+    get filteredDevelopers() {
+        const matchesFilter = new RegExp(this.filter, "i");
+        return this.devsList.filter(({ name }) => !this.filter || matchesFilter.test(name));
+    };
 
    clearList() {
        this.devsList = [];
@@ -32,14 +37,20 @@ class Store {
    addDeveloper(dev) {
        this.devsList.push(dev);
     };
-};
+    updateFilter(value) {
+        this.filter = value;
+    }
+}
 
 decorate(Store, {
-    devList: observable,
+    devsList: observable,
+    filter: observable,
     totalSum: computed,
-    topPerformerrmer: computed,
+    topPerformer: computed,
+    filteredDevelopers: computed,
     clearList: action,
     addDeveloper: action,
+    updateFilter: action,
 });
 
 const appStore = new Store();
@@ -66,7 +77,7 @@ const Row = ({ data: { name, sp } }) => {
                 </tr>
                 </thead>
                 <tbody>
-                {store.devsList.map((dev, i) => <Row key={i} data={dev} />)}
+                {store.filteredDevelopers.map((dev, i) => <Row key={i} data={dev} />)}
                 </tbody>
                 <tfoot>
                 <tr>
@@ -83,20 +94,25 @@ const Row = ({ data: { name, sp } }) => {
     }
 }
 
-class Controls extends Component {
+@observer class Controls extends Component {
     addDeveloper = () => {
         const name = prompt("The name:");
         const sp = parseInt(prompt("The story points:"), 10);
         this.props.store.addDeveloper({ name, sp });
-    };
+    }
 
     clearList = () => { this.props.store.clearList(); }
+
+    filterDevelopers = ({ target: { value } }) => {
+        this.props.store.updateFilter(value);
+    }
 
     render() {
         return (
             <div className="controls">
                 <button onClick={this.clearList}>Clear table</button>
                 <button onClick={this.addDeveloper}>Add record</button>
+                <input value={this.props.store.filter} onChange={this.filterDevelopers} />
             </div>
         );
     }
