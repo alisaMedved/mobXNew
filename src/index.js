@@ -1,51 +1,117 @@
+import './index.css';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import * as serviceWorker from './serviceWorker';
-import { observable, configure, action } from 'mobx';
+import { observable, computed, configure, action, decorate } from 'mobx';
 import { observer } from 'mobx-react';
+configure({ enforceActions: 'observed' });
 
-// один из принципов mobX - изменения в сторе должны осущесвлять только actions
+class Store {
+   devsList = [
+        { name: "Jack", sp: 12 },
+        { name: "Max", sp: 10 },
+        { name: "Leo", sp: 8 },
+    ];
 
-configure({enforceActions: 'observed'});
+   get totalSum() {
+        return this.devsList.reduce((sum, {sp}) => sum += sp, 0)
+    };
 
-const nickName = observable({
-    firstName: 'Yauhen',
-    age: 30,
+    get topPerformer() {
+        const maxSp = Math.max(...this.devsList.map(({ sp }) => sp));
+        return this.devsList.find(({ sp, name }) => {
+            if(maxSp === sp) {
+                return name;
+            }
+        });
+    };
 
-    get nickName() {
-        console.log('Generate nickName!');
-        return `${this.firstName}${this.age}`;
-    },
+   clearList() {
+       this.devsList = [];
+    };
 
-    increment() { this.age++ },
+   addDeveloper(dev) {
+       this.devsList.push(dev);
+    };
+};
 
-    decrement() { this.age-- },
-},
-    {
-        increment: action('Plus one'),
-        decrement: action('Minus one')
-    }, {
-    name: 'nickNameObservableObject'
-    }  );
+decorate(Store, {
+    devList: observable,
+    totalSum: computed,
+    topPerformerrmer: computed,
+    clearList: action,
+    addDeveloper: action,
+});
 
-@observer class Counter extends Component {
+const appStore = new Store();
 
-    handleIncrement = () => { this.props.store.increment() };
-    handleDecrement = () => { this.props.store.decrement() };
+const Row = ({ data: { name, sp } }) => {
+    return (
+        <tr>
+            <td>{name}</td>
+            <td>{sp}</td>
+        </tr>
+    );
+};
+
+@observer class Table extends Component {
+    render() {
+        const { store } = this.props;
+
+        return (
+            <table>
+                <thead>
+                <tr>
+                    <td>Name:</td>
+                    <td>SP:</td>
+                </tr>
+                </thead>
+                <tbody>
+                {store.devsList.map((dev, i) => <Row key={i} data={dev} />)}
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td>Team SP:</td>
+                    <td>{store.totalSum}</td>
+                </tr>
+                <tr>
+                    <td>Top Performer:</td>
+                    <td>{store.topPerformer ? store.topPerformer.name : ''}</td>
+                </tr>
+                </tfoot>
+            </table>
+        );
+    }
+}
+
+class Controls extends Component {
+    addDeveloper = () => {
+        const name = prompt("The name:");
+        const sp = parseInt(prompt("The story points:"), 10);
+        this.props.store.addDeveloper({ name, sp });
+    };
+
+    clearList = () => { this.props.store.clearList(); }
 
     render() {
         return (
-            <div className="App">
-                <h1>{this.props.store.nickName}</h1>
-                <h1>{this.props.store.age}</h1>
-                <button onClick={this.handleDecrement}>-1</button>
-                <button onClick={this.handleIncrement}>+1</button>
+            <div className="controls">
+                <button onClick={this.clearList}>Clear table</button>
+                <button onClick={this.addDeveloper}>Add record</button>
             </div>
         );
     }
 }
 
-ReactDOM.render(<Counter store={nickName} />, document.getElementById('root'));
+class App extends Component {
+    render() {
+        return (
+            <div>
+                <h1>Sprint Board:</h1>
+                <Controls store={appStore} />
+                <Table store={appStore} />
+            </div>
+        )
+    }
+}
 
-serviceWorker.unregister();
+ReactDOM.render(<App store={Store} />, document.getElementById('root'));
