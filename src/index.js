@@ -13,12 +13,11 @@ class Store {
            .then(res => res.json())
            .then(json => {
                if (json.results) {
-                   this.setUser(json.results);
+                   runInAction(() => {
+                       this.user = json.results[0]
+                   });
                }
            })
-    };
-    setUser(results) {
-        this.user = results[0];
     };
 }
 
@@ -26,7 +25,6 @@ decorate(Store, {
     user: observable,
     // теряется контекст вызова action из-за содержания внутри него ассинхронщины
     getUser: action.bound,
-    setUser: action,
 });
 
 const appStore = new Store();
