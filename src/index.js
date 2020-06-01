@@ -3,7 +3,10 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { observable, configure, action, when, autorun } from 'mobx';
 import { observer } from 'mobx-react';
-configure({ enforceActions: 'observed' });
+
+// погуглить в чем разница
+// configure({ enforceActions: 'observed' });
+// configure({ enforceActions: 'always' });
 
 class Store {
     @observable count = 0;
@@ -30,18 +33,17 @@ autorun(() => {
         delay: 3000,
     });
 
-@observer class App extends Component {
-    handleIncrement = () => {this.props.store.increment() };
-    handleDecrement = () => {this.props.store.decrement() };
-    render() {
+// а вот так можно писать код с functional Component
+const App = observer((props) => {
+    const handleIncrement = () => {props.store.increment() };
+    const handleDecrement = () => {props.store.decrement() };
         return (
             <div>
-                <h1>{this.props.store.count}</h1>
-                <button onClick={this.handleDecrement}>-1</button>
-                <button onClick={this.handleIncrement}>+1</button>
+                <h1>{props.store.count}</h1>
+                <button onClick={handleDecrement}>-1</button>
+                <button onClick={handleIncrement}>+1</button>
             </div>
-        )
-    }
-}
+        );
+});
 
 ReactDOM.render(<App store={appStore} />, document.getElementById('root'));
